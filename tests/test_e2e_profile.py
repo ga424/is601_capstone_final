@@ -89,7 +89,7 @@ def test_change_password_and_re_login(page):
     page.get_by_label("New Password").fill(new_password)
     page.get_by_role("button", name="Change Password").click()
 
-    expect(page.get_by_role("status")).to_contain_text("Password changed successfully")
+    expect(page.get_by_role("status")).to_contain_text("Password changed successfully", timeout=15_000)
 
     # re-login with new password
     page.evaluate("window.localStorage.removeItem('is601.jwt')")

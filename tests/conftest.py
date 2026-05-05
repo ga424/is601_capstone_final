@@ -6,7 +6,7 @@ from playwright.sync_api import sync_playwright
 
 @pytest.fixture(scope="session")
 def base_url() -> str:
-    return os.getenv("PLAYWRIGHT_BASE_URL", "http://127.0.0.1:8013")
+    return os.getenv("PLAYWRIGHT_BASE_URL", "http://127.0.0.1:8015")
 
 
 @pytest.fixture(scope="session")
