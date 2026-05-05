@@ -4,7 +4,7 @@ This project demonstrates a full-stack implementation of BREAD (Browse, Read, Ed
 
 ## Quick Links
 
-- [Docker Hub](https://hub.docker.com/r/ga424/is601_finalproject)
+- [Docker Hub](https://hub.docker.com/r/ga424/is601_capstone_final)
 - [OpenAPI Docs](http://127.0.0.1:8015/docs) *(local)*
 - [Architecture diagrams](docs/C4_ARCHITECTURE.md)
 - [Helper script](start.sh)
@@ -137,12 +137,11 @@ python3 -m pytest -q -m "not e2e"
 
 ### Validating each feature independently
 
-Switch to the feature branch, then run the command for that feature.
+All three features are merged into `main`. Run the targeted commands from the main branch:
 
 **Additional Calculation Types**
 
 ```bash
-git checkout feature/additional-calculations
 ./start.sh test-unit-calcs      # unit + API tests for new operations
 ./start.sh up                   # start the full stack
 ./start.sh test-e2e-calcs       # E2E tests for new operations
@@ -151,7 +150,6 @@ git checkout feature/additional-calculations
 **User Profile & Password Change**
 
 ```bash
-git checkout feature/user-profile
 ./start.sh test-unit-profile    # unit + API tests for profile endpoints
 ./start.sh up
 ./start.sh test-e2e-profile     # E2E tests: view, update email, change password
@@ -160,7 +158,6 @@ git checkout feature/user-profile
 **Report / History**
 
 ```bash
-git checkout feature/reports-history
 ./start.sh test-unit-reports    # unit + API tests for the /reports endpoint
 ./start.sh up
 ./start.sh test-e2e-reports     # E2E tests: panel visibility, counts, refresh
@@ -212,8 +209,8 @@ Run a security scan:
 Build and run the image directly:
 
 ```bash
-docker build -t ga424/is601_finalproject:latest .
-docker run --rm -p 8015:8015 ga424/is601_finalproject:latest
+docker build -t ga424/is601_capstone_final:latest .
+docker run --rm -p 8015:8015 ga424/is601_capstone_final:latest
 ```
 
 ---
@@ -283,4 +280,4 @@ Required repository secrets: `DOCKERHUB_USERNAME`, `DOCKERHUB_TOKEN`
 
 - The model stores physical `a` and `b` columns for the first two operands and keeps `inputs[]` for the full request payload.
 - The documentation in `docs/` includes the C4 architecture view and a navigation index.
-- Docker Hub repository: [hub.docker.com/r/ga424/is601_finalproject](https://hub.docker.com/r/ga424/is601_finalproject)
+- Docker Hub repository: [hub.docker.com/r/ga424/is601_capstone_final](https://hub.docker.com/r/ga424/is601_capstone_final)
