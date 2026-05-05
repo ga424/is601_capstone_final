@@ -265,3 +265,91 @@ def test_calculation_endpoints_require_authentication(client):
     assert post_response.json()["detail"] == "Missing bearer token"
     assert list_response.status_code == 401
     assert list_response.json()["detail"] == "Missing bearer token"
+
+
+# ---------------------------------------------------------------------------
+# Profile endpoints
+# ---------------------------------------------------------------------------
+
+
+def test_get_profile_returns_current_user(client):
+    headers = auth_headers(client, email="profile-get@example.com")
+    response = client.get("/profile/me", headers=headers)
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["email"] == "profile-get@example.com"
+    assert data["is_active"] is True
+    assert data["id"]
+
+
+def test_update_email_success(client):
+    headers = auth_headers(client, email="old-email@example.com")
+    response = client.patch(
+        "/profile/email",
+        json={"email": "new-email@example.com"},
+        headers=headers,
+    )
+
+    assert response.status_code == 200
+    assert response.json()["email"] == "new-email@example.com"
+
+
+def test_update_email_rejects_duplicate(client):
+    auth_headers(client, email="taken@example.com")
+    headers = auth_headers(client, email="updater@example.com")
+    response = client.patch(
+        "/profile/email",
+        json={"email": "taken@example.com"},
+        headers=headers,
+    )
+
+    assert response.status_code == 409
+    assert response.json()["detail"] == "Email already in use"
+
+
+def test_change_password_success(client):
+    headers = auth_headers(client, email="pw-change@example.com")
+    response = client.patch(
+        "/profile/password",
+        json={"current_password": "strongpassword123", "new_password": "newsecurepass456"},
+        headers=headers,
+    )
+
+    assert response.status_code == 200
+    assert response.json()["email"] == "pw-change@example.com"
+
+    # verify old password no longer works
+    login_old = client.post(
+        "/login",
+        json={"email": "pw-change@example.com", "password": "strongpassword123"},
+    )
+    assert login_old.status_code == 401
+
+    # verify new password works
+    login_new = client.post(
+        "/login",
+        json={"email": "pw-change@example.com", "password": "newsecurepass456"},
+    )
+    assert login_new.status_code == 200
+
+
+def test_change_password_rejects_wrong_current(client):
+    headers = auth_headers(client, email="pw-wrong@example.com")
+    response = client.patch(
+        "/profile/password",
+        json={"current_password": "wrongpassword999", "new_password": "newsecurepass456"},
+        headers=headers,
+    )
+
+    assert response.status_code == 401
+    assert response.json()["detail"] == "Current password is incorrect"
+
+
+def test_profile_endpoints_require_authentication(client):
+    assert client.get("/profile/me").status_code == 401
+    assert client.patch("/profile/email", json={"email": "x@x.com"}).status_code == 401
+    assert client.patch(
+        "/profile/password",
+        json={"current_password": "strongpassword123", "new_password": "newpass999"},
+    ).status_code == 401

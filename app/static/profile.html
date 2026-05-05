@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Profile</title>
+    <link rel="stylesheet" href="/static/auth.css">
+</head>
+<body>
+    <main class="app-shell">
+        <section class="app-card">
+            <header class="app-header">
+                <div>
+                    <p class="eyebrow">FastAPI JWT Auth</p>
+                    <h1>Your Profile</h1>
+                    <p class="lede" data-profile-email>Loading...</p>
+                </div>
+                <button type="button" class="ghost-button" data-logout>Logout</button>
+            </header>
+
+            <p class="message" role="status" aria-live="polite" data-message></p>
+
+            <section class="results-panel">
+                <div class="results-header">
+                    <h2>Update Email</h2>
+                </div>
+                <form class="calc-form" data-email-form novalidate>
+                    <label for="newEmail">New Email</label>
+                    <input id="newEmail" name="newEmail" type="email" autocomplete="email" required>
+                    <button type="submit">Update Email</button>
+                </form>
+            </section>
+
+            <section class="results-panel">
+                <div class="results-header">
+                    <h2>Change Password</h2>
+                </div>
+                <form class="calc-form" data-password-form novalidate>
+                    <label for="currentPassword">Current Password</label>
+                    <input id="currentPassword" name="currentPassword" type="password" autocomplete="current-password" required>
+                    <label for="newPassword">New Password</label>
+                    <input id="newPassword" name="newPassword" type="password" autocomplete="new-password" required>
+                    <button type="submit">Change Password</button>
+                </form>
+            </section>
+
+            <p class="switcher"><a href="/dashboard">← Back to Dashboard</a></p>
+        </section>
+    </main>
+    <script>
+        const TOKEN_KEY = "is601.jwt";
+
+        function getAuthToken() {
+            return window.localStorage.getItem(TOKEN_KEY);
+        }
+
+        function getAuthHeaders(token) {
+            return {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+            };
+        }
+
+        function setMessage(text, state) {
+            const el = document.querySelector("[data-message]");
+            if (!el) return;
+            el.textContent = text;
+            el.dataset.state = state;
+        }
+
+        async function loadProfile(token) {
+            const response = await fetch("/profile/me", {
+                headers: getAuthHeaders(token),
+            });
+            if (!response.ok) {
+                if (response.status === 401) {
+                    window.localStorage.removeItem(TOKEN_KEY);
+                    window.location.href = "/login";
+                }
+                return;
+            }
+            const user = await response.json();
+            const emailEl = document.querySelector("[data-profile-email]");
+            if (emailEl) emailEl.textContent = user.email;
+            const emailInput = document.getElementById("newEmail");
+            if (emailInput) emailInput.value = user.email;
+        }
+
+        async function handleEmailSubmit(event) {
+            event.preventDefault();
+            const token = getAuthToken();
+            if (!token) { window.location.href = "/login"; return; }
+
+            const newEmail = event.currentTarget.elements.newEmail.value.trim();
+            if (!newEmail || !newEmail.includes("@")) {
+                setMessage("Enter a valid email address.", "error");
+                return;
+            }
+
+            setMessage("Updating email...", "loading");
+            const response = await fetch("/profile/email", {
+                method: "PATCH",
+                headers: getAuthHeaders(token),
+                body: JSON.stringify({ email: newEmail }),
+            });
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok) {
+                const detail = payload?.detail || "Unable to update email.";
+                setMessage(detail, "error");
+                return;
+            }
+            const emailEl = document.querySelector("[data-profile-email]");
+            if (emailEl) emailEl.textContent = payload.email;
+            setMessage("Email updated successfully.", "success");
+        }
+
+        async function handlePasswordSubmit(event) {
+            event.preventDefault();
+            const token = getAuthToken();
+            if (!token) { window.location.href = "/login"; return; }
+
+            const currentPassword = event.currentTarget.elements.currentPassword.value;
+            const newPassword = event.currentTarget.elements.newPassword.value;
+
+            if (newPassword.length < 8) {
+                setMessage("New password must be at least 8 characters.", "error");
+                return;
+            }
+
+            setMessage("Changing password...", "loading");
+            const response = await fetch("/profile/password", {
+                method: "PATCH",
+                headers: getAuthHeaders(token),
+                body: JSON.stringify({ current_password: currentPassword, new_password: newPassword }),
+            });
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok) {
+                const detail = payload?.detail || "Unable to change password.";
+                setMessage(detail, "error");
+                return;
+            }
+            event.currentTarget.reset();
+            setMessage("Password changed successfully.", "success");
+        }
+
+        function bindProfile() {
+            const token = getAuthToken();
+            if (!token) { window.location.href = "/login"; return; }
+
+            loadProfile(token);
+
+            document.querySelector("[data-email-form]")
+                .addEventListener("submit", handleEmailSubmit);
+
+            document.querySelector("[data-password-form]")
+                .addEventListener("submit", handlePasswordSubmit);
+
+            document.querySelector("[data-logout]").addEventListener("click", () => {
+                window.localStorage.removeItem(TOKEN_KEY);
+                window.location.href = "/login";
+            });
+        }
+
+        document.addEventListener("DOMContentLoaded", bindProfile);
+    </script>
+</body>
+</html>

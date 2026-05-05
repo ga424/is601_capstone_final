@@ -47,6 +47,23 @@ class AuthResponse(BaseModel):
     user: UserRead
 
 
+class UserUpdate(BaseModel):
+    email: str = Field(..., min_length=5, max_length=255)
+
+    @field_validator("email")
+    @classmethod
+    def validate_email(cls, value: str) -> str:
+        normalized = value.strip().lower()
+        if "@" not in normalized or normalized.startswith("@") or normalized.endswith("@"):
+            raise ValueError("Invalid email format")
+        return normalized
+
+
+class PasswordChange(BaseModel):
+    current_password: str = Field(..., min_length=8, max_length=128)
+    new_password: str = Field(..., min_length=8, max_length=128)
+
+
 class CalculationType(str, Enum):
     ADDITION = "addition"
     SUBTRACTION = "subtraction"
