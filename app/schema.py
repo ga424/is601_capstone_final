@@ -107,3 +107,15 @@ class CalculationRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class CalculationTypeStat(BaseModel):
+    type: str
+    count: int
+
+
+class ReportRead(BaseModel):
+    total_calculations: int
+    by_type: list[CalculationTypeStat]
+    average_result: float | None
+    most_used_type: str | None
+
+

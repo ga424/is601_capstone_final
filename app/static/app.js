@@ -161,6 +161,7 @@ async function handleDeleteCalculation(id) {
     if (response.status === 204) {
         setMessage(messageElement, "Calculation deleted.", "success");
         await loadCalculations(token, listElement, messageElement, true);
+        await loadReport(token);
         return;
     }
 
@@ -249,6 +250,46 @@ async function handleCalculationSubmit(event) {
         delete form.dataset.editId;
     }
     await loadCalculations(token, listElement, messageElement, true);
+    await loadReport(token);
+}
+
+async function loadReport(token) {
+    const listElement = document.querySelector("[data-report-list]");
+    if (!listElement) return;
+
+    const response = await fetch("/reports", {
+        method: "GET",
+        headers: getAuthHeaders(token),
+    });
+
+    if (!response.ok) return;
+
+    const report = await response.json().catch(() => null);
+    if (!report) return;
+
+    listElement.innerHTML = "";
+
+    if (report.total_calculations === 0) {
+        const emptyItem = document.createElement("li");
+        emptyItem.className = "result-empty";
+        emptyItem.textContent = "No calculations yet.";
+        listElement.appendChild(emptyItem);
+        return;
+    }
+
+    const stats = [
+        `Total: ${report.total_calculations}`,
+        `Most used: ${report.most_used_type ?? "—"}`,
+        `Average result: ${report.average_result != null ? report.average_result.toFixed(2) : "—"}`,
+        ...report.by_type.map((s) => `${s.type}: ${s.count}`),
+    ];
+
+    stats.forEach((text) => {
+        const item = document.createElement("li");
+        item.className = "result-item";
+        item.textContent = text;
+        listElement.appendChild(item);
+    });
 }
 
 function bindDashboard() {
@@ -257,6 +298,7 @@ function bindDashboard() {
     const listElement = document.querySelector("[data-result-list]");
     const messageElement = document.querySelector("[data-message]");
     const refreshButton = document.querySelector("[data-refresh]");
+    const refreshReportButton = document.querySelector("[data-refresh-report]");
     const logoutButton = document.querySelector("[data-logout]");
 
     const token = getAuthToken();
@@ -273,12 +315,19 @@ function bindDashboard() {
         await loadCalculations(token, listElement, messageElement);
     });
 
+    if (refreshReportButton) {
+        refreshReportButton.addEventListener("click", async () => {
+            await loadReport(token);
+        });
+    }
+
     logoutButton.addEventListener("click", () => {
         window.localStorage.removeItem(TOKEN_KEY);
         window.location.href = "/login";
     });
 
     loadCalculations(token, listElement, messageElement);
+    loadReport(token);
 }
 
 document.addEventListener("DOMContentLoaded", bindDashboard);
