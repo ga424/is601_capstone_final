@@ -29,7 +29,7 @@ jobs:
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: module14_db
+          POSTGRES_DB: finalproject_db
         ports:
           - 5432:5432
         options: >-
@@ -38,7 +38,7 @@ jobs:
           --health-timeout 5s
           --health-retries 5
     env:
-      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/module14_db
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/finalproject_db
       JWT_SECRET_KEY: ci-test-secret-key-32-chars-minimum
     steps:
       - uses: actions/checkout@v4
@@ -62,7 +62,7 @@ jobs:
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: module14_db
+          POSTGRES_DB: finalproject_db
         ports:
           - 5432:5432
         options: >-
@@ -71,9 +71,9 @@ jobs:
           --health-timeout 5s
           --health-retries 5
     env:
-      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/module14_db
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/finalproject_db
       JWT_SECRET_KEY: ci-test-secret-key-32-chars-minimum
-      PLAYWRIGHT_BASE_URL: http://127.0.0.1:8013
+      PLAYWRIGHT_BASE_URL: http://127.0.0.1:8015
     steps:
       - uses: actions/checkout@v4
 
@@ -90,13 +90,13 @@ jobs:
 
       - name: Start FastAPI app
         run: |
-          uvicorn app.main:app --host 127.0.0.1 --port 8013 &
+          uvicorn app.main:app --host 127.0.0.1 --port 8015 &
           echo $! > /tmp/uvicorn.pid
 
       - name: Wait for app to be ready
         run: |
           for i in $(seq 1 30); do
-            if curl -sf http://127.0.0.1:8013/health; then
+            if curl -sf http://127.0.0.1:8015/health; then
               echo "App is ready"
               exit 0
             fi
