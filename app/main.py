@@ -5,13 +5,15 @@ from fastapi import Depends, FastAPI, HTTPException, status
 from fastapi.responses import FileResponse
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from fastapi.staticfiles import StaticFiles
+from collections import Counter
+
 from sqlalchemy import inspect, text
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from app.database import Base, engine, get_db
 from app.models import Calculation, User
-from app.schema import AuthResponse, CalculationCreate, CalculationRead, UserCreate, UserLogin, UserRead
+from app.schema import AuthResponse, CalculationCreate, CalculationRead, CalculationTypeStat, ReportRead, UserCreate, UserLogin, UserRead
 from app.security import create_access_token, decode_access_token, hash_password, verify_password
 
 app = FastAPI()
