@@ -4,8 +4,8 @@ This project demonstrates a full-stack implementation of BREAD (Browse, Read, Ed
 
 ## Quick Links
 
-- [Docker Hub](https://hub.docker.com/r/ga424/is601_assignment14)
-- [OpenAPI Docs](http://127.0.0.1:8013/docs) *(local)*
+- [Docker Hub](https://hub.docker.com/r/ga424/is601_finalproject)
+- [OpenAPI Docs](http://127.0.0.1:8015/docs) *(local)*
 - [Architecture diagrams](docs/C4_ARCHITECTURE.md)
 - [Helper script](start.sh)
 
@@ -114,16 +114,16 @@ docker compose up -d db
 Run the app:
 
 ```bash
-uvicorn app.main:app --reload --port 8013
+uvicorn app.main:app --reload --port 8015
 ```
 
 Pages:
 
-- `http://127.0.0.1:8013/register`
-- `http://127.0.0.1:8013/login`
-- `http://127.0.0.1:8013/dashboard`
-- `http://127.0.0.1:8013/profile` *(feature/user-profile)*
-- `http://127.0.0.1:8013/docs`
+- `http://127.0.0.1:8015/register`
+- `http://127.0.0.1:8015/login`
+- `http://127.0.0.1:8015/dashboard`
+- `http://127.0.0.1:8015/profile` *(feature/user-profile)*
+- `http://127.0.0.1:8015/docs`
 
 ---
 
@@ -212,8 +212,8 @@ Run a security scan:
 Build and run the image directly:
 
 ```bash
-docker build -t ga424/is601_assignment14:latest .
-docker run --rm -p 8013:8013 ga424/is601_assignment14:latest
+docker build -t ga424/is601_finalproject:latest .
+docker run --rm -p 8015:8015 ga424/is601_finalproject:latest
 ```
 
 ---
@@ -223,11 +223,11 @@ docker run --rm -p 8013:8013 ga424/is601_assignment14:latest
 Register and login:
 
 ```bash
-curl -X POST http://127.0.0.1:8013/register \
+curl -X POST http://127.0.0.1:8015/register \
   -H "Content-Type: application/json" \
   -d '{"email":"student@example.com","password":"strongpassword123"}'
 
-curl -X POST http://127.0.0.1:8013/login \
+curl -X POST http://127.0.0.1:8015/login \
   -H "Content-Type: application/json" \
   -d '{"email":"student@example.com","password":"strongpassword123"}'
 ```
@@ -235,12 +235,12 @@ curl -X POST http://127.0.0.1:8013/login \
 Create calculations (set `TOKEN` to the `access_token` from login):
 
 ```bash
-curl -X POST http://127.0.0.1:8013/calculations \
+curl -X POST http://127.0.0.1:8015/calculations \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"type":"exponentiation","inputs":[2,10]}'
 
-curl -X POST http://127.0.0.1:8013/calculations \
+curl -X POST http://127.0.0.1:8015/calculations \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"type":"average","inputs":[10,20,30,40]}'
@@ -249,19 +249,19 @@ curl -X POST http://127.0.0.1:8013/calculations \
 Fetch usage report:
 
 ```bash
-curl http://127.0.0.1:8013/reports \
+curl http://127.0.0.1:8015/reports \
   -H "Authorization: Bearer $TOKEN"
 ```
 
 Update profile:
 
 ```bash
-curl -X PATCH http://127.0.0.1:8013/profile/email \
+curl -X PATCH http://127.0.0.1:8015/profile/email \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"email":"newemail@example.com"}'
 
-curl -X PATCH http://127.0.0.1:8013/profile/password \
+curl -X PATCH http://127.0.0.1:8015/profile/password \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"current_password":"strongpassword123","new_password":"newsecurepass456"}'
@@ -283,4 +283,4 @@ Required repository secrets: `DOCKERHUB_USERNAME`, `DOCKERHUB_TOKEN`
 
 - The model stores physical `a` and `b` columns for the first two operands and keeps `inputs[]` for the full request payload.
 - The documentation in `docs/` includes the C4 architecture view and a navigation index.
-- Docker Hub repository: [hub.docker.com/r/ga424/is601_assignment14](https://hub.docker.com/r/ga424/is601_assignment14)
+- Docker Hub repository: [hub.docker.com/r/ga424/is601_finalproject](https://hub.docker.com/r/ga424/is601_finalproject)
