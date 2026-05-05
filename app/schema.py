@@ -52,6 +52,9 @@ class CalculationType(str, Enum):
     SUBTRACTION = "subtraction"
     MULTIPLICATION = "multiplication"
     DIVISION = "division"
+    EXPONENTIATION = "exponentiation"
+    MODULUS = "modulus"
+    AVERAGE = "average"
 
 
 class CalculationCreate(BaseModel):
@@ -69,6 +72,8 @@ class CalculationCreate(BaseModel):
     def validate_inputs(self):
         if self.type == CalculationType.DIVISION and any(v == 0 for v in self.inputs[1:]):
             raise ValueError("Cannot divide by zero")
+        if self.type == CalculationType.MODULUS and self.inputs[1] == 0:
+            raise ValueError("Cannot compute modulus with divisor zero")
         return self
 
 
