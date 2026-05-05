@@ -261,3 +261,31 @@ def delete_calculation(
     db.commit()
     return None
 
+
+@app.get("/reports", response_model=ReportRead)
+def get_report(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    rows = (
+        db.query(Calculation)
+        .filter(Calculation.user_id == current_user.id)
+        .all()
+    )
+    total = len(rows)
+    if total == 0:
+        return ReportRead(total_calculations=0, by_type=[], average_result=None, most_used_type=None)
+
+    type_counts = Counter(r.type for r in rows)
+    by_type = [CalculationTypeStat(type=t, count=c) for t, c in sorted(type_counts.items())]
+    results = [r.result for r in rows if r.result is not None]
+    average_result = sum(results) / len(results) if results else None
+    most_used_type = type_counts.most_common(1)[0][0]
+
+    return ReportRead(
+        total_calculations=total,
+        by_type=by_type,
+        average_result=average_result,
+        most_used_type=most_used_type,
+    )
+

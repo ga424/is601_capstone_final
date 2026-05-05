@@ -251,6 +251,45 @@ async function handleCalculationSubmit(event) {
     await loadCalculations(token, listElement, messageElement, true);
 }
 
+async function loadReport(token) {
+    const listElement = document.querySelector("[data-report-list]");
+    if (!listElement) return;
+
+    const response = await fetch("/reports", {
+        method: "GET",
+        headers: getAuthHeaders(token),
+    });
+
+    if (!response.ok) return;
+
+    const report = await response.json().catch(() => null);
+    if (!report) return;
+
+    listElement.innerHTML = "";
+
+    if (report.total_calculations === 0) {
+        const emptyItem = document.createElement("li");
+        emptyItem.className = "result-empty";
+        emptyItem.textContent = "No calculations yet.";
+        listElement.appendChild(emptyItem);
+        return;
+    }
+
+    const stats = [
+        `Total: ${report.total_calculations}`,
+        `Most used: ${report.most_used_type ?? "—"}`,
+        `Average result: ${report.average_result != null ? report.average_result.toFixed(2) : "—"}`,
+        ...report.by_type.map((s) => `${s.type}: ${s.count}`),
+    ];
+
+    stats.forEach((text) => {
+        const item = document.createElement("li");
+        item.className = "result-item";
+        item.textContent = text;
+        listElement.appendChild(item);
+    });
+}
+
 function bindDashboard() {
     const tokenElement = document.querySelector("[data-token-value]");
     const form = document.querySelector("[data-calc-form]");
