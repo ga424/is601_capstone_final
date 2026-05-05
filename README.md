@@ -1,13 +1,56 @@
-# IS601 Assignment 14 — BREAD Calculations API
+# IS601 Final Project — BREAD Calculations API
 
-This project demonstrates a full-stack implementation of BREAD (Browse, Read, Edit, Add, Delete) endpoints for a user-owned calculations resource, built with FastAPI, PostgreSQL, JWT authentication, and a browser-based dashboard. It includes Playwright end-to-end tests covering positive and negative scenarios, and a CI/CD pipeline that runs all tests and publishes a Docker image to Docker Hub.
+This project demonstrates a full-stack implementation of BREAD (Browse, Read, Edit, Add, Delete) endpoints for a user-owned calculations resource, built with FastAPI, PostgreSQL, JWT authentication, and a browser-based dashboard. Three independent features extend the base application, each developed on its own branch with full backend, frontend, and test coverage.
 
 ## Quick Links
 
-- [Docker Hub](https://hub.docker.com/r/ga424/is601_assignment14)
-- [OpenAPI Docs](http://127.0.0.1:8013/docs) *(local)*
+- [Docker Hub](https://hub.docker.com/r/ga424/is601_finalproject)
+- [OpenAPI Docs](http://127.0.0.1:8015/docs) *(local)*
 - [Architecture diagrams](docs/C4_ARCHITECTURE.md)
 - [Helper script](start.sh)
+
+---
+
+## Features
+
+### 1. Additional Calculation Types (`feature/additional-calculations`)
+
+Adds three new operations beyond the base four (addition, subtraction, multiplication, division):
+
+| Operation | Description | Example |
+|-----------|-------------|---------|
+| Exponentiation | Left-to-right `a ** b` | `2, 3` → `8` |
+| Modulus | `a % b` (rejects divisor zero) | `10, 3` → `1` |
+| Average | Mean of all inputs | `1, 2, 3` → `2` |
+
+The dashboard dropdown is updated and the schema validates modulus-by-zero at the Pydantic layer.
+
+### 2. User Profile & Password Change (`feature/user-profile`)
+
+Lets authenticated users view and update their account credentials via `/profile`:
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/profile/me` | Return current user's profile |
+| `PATCH` | `/profile/email` | Update email address |
+| `PATCH` | `/profile/password` | Change password (verifies current password first) |
+
+A dedicated profile page (`/profile`) provides forms for both actions, accessible via a "Profile" link in the dashboard header.
+
+### 3. Report / History (`feature/reports-history`)
+
+Provides per-user usage statistics via `GET /reports`:
+
+| Field | Description |
+|-------|-------------|
+| `total_calculations` | Total number of calculations run |
+| `by_type` | Count per calculation type |
+| `average_result` | Mean of all stored results |
+| `most_used_type` | The operation used most |
+
+A "Usage Report" panel on the dashboard loads automatically and refreshes after every create or delete.
+
+---
 
 ## BREAD Endpoints
 
@@ -28,24 +71,21 @@ All calculation endpoints require a valid JWT (`Authorization: Bearer <token>`).
 | `POST` | `/register` | Create a new user account, returns JWT |
 | `POST` | `/login` | Authenticate and receive a JWT |
 
-## Front-End Dashboard
+**Profile endpoints** *(feature/user-profile)*:
 
-The browser dashboard (`/`) lets authenticated users perform all BREAD operations without leaving the page:
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/profile/me` | Get current user's profile |
+| `PATCH` | `/profile/email` | Update email |
+| `PATCH` | `/profile/password` | Change password |
 
-- **Browse** — calculations table loads automatically on login
-- **Add** — form accepts operation type and comma-separated numeric inputs
-- **Read** — View button displays calculation details inline
-- **Edit** — Edit button pre-populates the form; saving issues a `PUT` request
-- **Delete** — Delete button prompts for confirmation before removing
+**Report endpoint** *(feature/reports-history)*:
 
-Client-side validation rejects non-numeric inputs, single-value inputs (minimum 2 operands required), and mismatched passwords on registration.
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/reports` | Return usage statistics for the current user |
 
-## Tests
-
-Playwright E2E tests cover both happy-path and failure scenarios:
-
-- **Positive:** register, login, create, list, view, update, delete calculations
-- **Negative:** duplicate email, wrong password, tampered JWT, non-numeric inputs, single operand, division by zero, cross-user access isolation
+---
 
 ## Setup
 
@@ -61,7 +101,9 @@ Create your environment file:
 cp .env.example .env
 ```
 
-## Run locally
+---
+
+## Run Locally
 
 Start PostgreSQL with Docker:
 
@@ -69,64 +111,62 @@ Start PostgreSQL with Docker:
 docker compose up -d db
 ```
 
-Then run the app locally:
+Run the app:
 
 ```bash
-uvicorn app.main:app --reload
+uvicorn app.main:app --reload --port 8015
 ```
 
-Open the app and docs:
+Pages:
 
-- `http://127.0.0.1:8013/`
-- `http://127.0.0.1:8013/register`
-- `http://127.0.0.1:8013/login`
-- `http://127.0.0.1:8013/docs`
+- `http://127.0.0.1:8015/register`
+- `http://127.0.0.1:8015/login`
+- `http://127.0.0.1:8015/dashboard`
+- `http://127.0.0.1:8015/profile` *(feature/user-profile)*
+- `http://127.0.0.1:8015/docs`
 
-## Example request
+---
 
-```bash
-curl -X POST http://127.0.0.1:8013/calculations \
-  -H "Content-Type: application/json" \
-  -d '{"type":"addition","inputs":[3,4,5]}'
-```
+## Running Tests
 
-Register user:
-
-```bash
-curl -X POST http://127.0.0.1:8013/register \
-  -H "Content-Type: application/json" \
-  -d '{"email":"student@example.com","password":"strongpassword123"}'
-```
-
-Login user:
-
-```bash
-curl -X POST http://127.0.0.1:8013/login \
-  -H "Content-Type: application/json" \
-  -d '{"email":"student@example.com","password":"strongpassword123"}'
-```
-
-## Test
+### All unit + API tests (no app required)
 
 ```bash
 python3 -m pytest -q -m "not e2e"
 ```
 
-If you want to target the Dockerized database explicitly, set `DATABASE_URL` to the compose PostgreSQL connection string and run the same test command.
+### Validating each feature independently
 
-Run API-only tests:
+Switch to the feature branch, then run the command for that feature.
 
-```bash
-python3 -m pytest -q tests/test_api.py
-```
-
-Run DB integration tests:
+**Additional Calculation Types**
 
 ```bash
-python3 -m pytest -q tests/test_integration_db.py
+git checkout feature/additional-calculations
+./start.sh test-unit-calcs      # unit + API tests for new operations
+./start.sh up                   # start the full stack
+./start.sh test-e2e-calcs       # E2E tests for new operations
 ```
 
-Run Playwright end-to-end tests:
+**User Profile & Password Change**
+
+```bash
+git checkout feature/user-profile
+./start.sh test-unit-profile    # unit + API tests for profile endpoints
+./start.sh up
+./start.sh test-e2e-profile     # E2E tests: view, update email, change password
+```
+
+**Report / History**
+
+```bash
+git checkout feature/reports-history
+./start.sh test-unit-reports    # unit + API tests for the /reports endpoint
+./start.sh up
+./start.sh test-e2e-reports     # E2E tests: panel visibility, counts, refresh
+```
+
+### Run all E2E tests (full stack must be running)
 
 ```bash
 ./start.sh up
@@ -134,74 +174,113 @@ python3 -m playwright install chromium
 python3 -m pytest -q -m e2e
 ```
 
-## Manual OpenAPI checks
+### Specific test files
 
-1. Start services: `./start.sh up` (or `docker compose up --build`)
-2. Open `http://127.0.0.1:8013/docs`
-3. Verify user endpoints:
-  - `POST /register` creates a user and returns a JWT (201)
-  - `POST /login` validates credentials and returns a JWT (200)
-4. Verify calculation endpoints:
-   - `POST /calculations` creates a calculation (201)
-   - `GET /calculations` lists calculations (200)
-   - `GET /calculations/{id}` returns one calculation (200)
-   - `PUT /calculations/{id}` updates calculation values/result (200)
-   - `DELETE /calculations/{id}` removes the calculation (204)
-5. Verify invalid payloads return expected error codes (e.g. 401/404/409/422)
+```bash
+# Unit / model tests
+python3 -m pytest tests/test_models.py
 
-Run local security scan:
+# API integration tests
+python3 -m pytest tests/test_api.py
+
+# DB integration tests (needs live PostgreSQL)
+python3 -m pytest tests/test_integration_db.py
+
+# E2E by feature
+python3 -m pytest tests/test_e2e_calculations.py   # feature/additional-calculations
+python3 -m pytest tests/test_e2e_profile.py        # feature/user-profile
+python3 -m pytest tests/test_e2e_reports.py        # feature/reports-history
+```
+
+---
+
+## Full Stack with Docker
+
+```bash
+./start.sh up       # start db + app
+./start.sh test     # run all non-E2E tests in a container
+./start.sh down     # stop everything
+./start.sh clean    # remove containers and volumes
+```
+
+Run a security scan:
 
 ```bash
 ./start.sh scan
 ```
 
-## Screenshots
+Build and run the image directly:
 
-- **CI workflow run:** `docs/ci-workflow-screenshot.png` — successful GitHub Actions run showing all three jobs (unit, integration, e2e) passing.
-- **Docker Hub deployment:** `docs/docker-hub-screenshot.png` — Docker image pushed to [hub.docker.com/r/ga424/is601_assignment14](https://hub.docker.com/r/ga424/is601_assignment14).
-- **Application front-end:** `docs/app-screenshots/` — screenshots of Browse, Read, Edit, Add, and Delete operations from the dashboard.
+```bash
+docker build -t ga424/is601_finalproject:latest .
+docker run --rm -p 8015:8015 ga424/is601_finalproject:latest
+```
+
+---
+
+## Example Requests
+
+Register and login:
+
+```bash
+curl -X POST http://127.0.0.1:8015/register \
+  -H "Content-Type: application/json" \
+  -d '{"email":"student@example.com","password":"strongpassword123"}'
+
+curl -X POST http://127.0.0.1:8015/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"student@example.com","password":"strongpassword123"}'
+```
+
+Create calculations (set `TOKEN` to the `access_token` from login):
+
+```bash
+curl -X POST http://127.0.0.1:8015/calculations \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"type":"exponentiation","inputs":[2,10]}'
+
+curl -X POST http://127.0.0.1:8015/calculations \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"type":"average","inputs":[10,20,30,40]}'
+```
+
+Fetch usage report:
+
+```bash
+curl http://127.0.0.1:8015/reports \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+Update profile:
+
+```bash
+curl -X PATCH http://127.0.0.1:8015/profile/email \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"email":"newemail@example.com"}'
+
+curl -X PATCH http://127.0.0.1:8015/profile/password \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"current_password":"strongpassword123","new_password":"newsecurepass456"}'
+```
+
+---
 
 ## CI/CD
 
-- CI workflow: `.github/workflows/ci.yml`
-  - Starts PostgreSQL and the FastAPI app
-  - Runs pytest unit tests and Playwright browser tests
-- Docker publish workflow: `.github/workflows/docker-publish.yml`
-  - Repeats the test flow, then builds and pushes the Docker image to Docker Hub on tags (`v*`) or manual dispatch
-- Security scan workflow: `.github/workflows/security-scan.yml`
-  - Runs Trivy filesystem and image scans
+- **CI workflow** (`.github/workflows/ci.yml`): starts PostgreSQL and the app, runs all pytest unit and Playwright E2E tests.
+- **Docker publish** (`.github/workflows/docker-publish.yml`): repeats the test flow, then builds and pushes the Docker image to Docker Hub on tags (`v*`) or manual dispatch.
+- **Security scan** (`.github/workflows/security-scan.yml`): runs Trivy filesystem and image scans.
 
-Required repository secrets:
+Required repository secrets: `DOCKERHUB_USERNAME`, `DOCKERHUB_TOKEN`
 
-- `DOCKERHUB_USERNAME`
-- `DOCKERHUB_TOKEN`
-
-## Docker
-
-Run full stack (PostgreSQL + app):
-
-```bash
-docker compose up --build
-```
-
-App URL:
-
-- `http://127.0.0.1:8013/`
-
-Build image only:
-
-```bash
-docker build -t ga424/is601_assignment14:latest .
-```
-
-Run:
-
-```bash
-docker run --rm -p 8013:8013 ga424/is601_assignment14:latest
-```
+---
 
 ## Notes
 
 - The model stores physical `a` and `b` columns for the first two operands and keeps `inputs[]` for the full request payload.
 - The documentation in `docs/` includes the C4 architecture view and a navigation index.
-- Docker Hub repository: [hub.docker.com/r/ga424/is601_assignment14](https://hub.docker.com/r/ga424/is601_assignment14)
+- Docker Hub repository: [hub.docker.com/r/ga424/is601_finalproject](https://hub.docker.com/r/ga424/is601_finalproject)

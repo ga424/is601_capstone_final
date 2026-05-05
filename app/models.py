@@ -40,6 +40,9 @@ class Calculation(Base):
             "subtraction": Subtraction,
             "multiplication": Multiplication,
             "division": Division,
+            "exponentiation": Exponentiation,
+            "modulus": Modulus,
+            "average": Average,
         }
         calculation_class = calculation_classes.get(calculation_type.lower())
         if not calculation_class:
@@ -91,6 +94,32 @@ class Division(Calculation):
                 raise ValueError("Cannot divide by zero")
             result /= value
         return result
+
+
+class Exponentiation(Calculation):
+    __mapper_args__ = {"polymorphic_identity": "exponentiation"}
+
+    def get_result(self) -> float:
+        result = self.inputs[0]
+        for value in self.inputs[1:]:
+            result **= value
+        return result
+
+
+class Modulus(Calculation):
+    __mapper_args__ = {"polymorphic_identity": "modulus"}
+
+    def get_result(self) -> float:
+        if self.inputs[1] == 0:
+            raise ValueError("Cannot compute modulus with divisor zero")
+        return self.inputs[0] % self.inputs[1]
+
+
+class Average(Calculation):
+    __mapper_args__ = {"polymorphic_identity": "average"}
+
+    def get_result(self) -> float:
+        return sum(self.inputs) / len(self.inputs)
 
 
 class User(Base):

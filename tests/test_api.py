@@ -55,6 +55,9 @@ def client():
         ({"type": "subtraction", "inputs": [10, 4, 1]}, 5.0, "subtraction"),
         ({"type": "multiplication", "inputs": [5, 6, 2]}, 60.0, "multiplication"),
         ({"type": "division", "inputs": [120, 3, 2]}, 20.0, "division"),
+        ({"type": "exponentiation", "inputs": [2, 3]}, 8.0, "exponentiation"),
+        ({"type": "modulus", "inputs": [10, 3]}, 1.0, "modulus"),
+        ({"type": "average", "inputs": [1, 2, 3, 4]}, 2.5, "average"),
     ],
 )
 def test_calculate_success(client, payload, expected_result, expected_class):
@@ -93,6 +96,18 @@ def test_division_by_zero_is_rejected(client):
     assert response.status_code == 422
     body = response.json()
     assert body["detail"]
+
+
+def test_modulus_by_zero_is_rejected(client):
+    headers = auth_headers(client, email="mod-zero@example.com")
+    response = client.post(
+        "/calculate",
+        json={"type": "modulus", "inputs": [10, 0]},
+        headers=headers,
+    )
+
+    assert response.status_code == 422
+    assert response.json()["detail"]
 
 
 def test_invalid_calculation_type_is_rejected(client):
