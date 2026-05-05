@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session
 
 from app.database import Base, engine, get_db
 from app.models import Calculation, User
-from app.schema import AuthResponse, CalculationCreate, CalculationRead, UserCreate, UserLogin, UserRead
+from app.schema import AuthResponse, CalculationCreate, CalculationRead, PasswordChange, UserCreate, UserLogin, UserRead, UserUpdate
 from app.security import create_access_token, decode_access_token, hash_password, verify_password
 
 app = FastAPI()
@@ -149,6 +149,12 @@ def dashboard_page():
     return FileResponse(STATIC_DIR / "dashboard.html")
 
 
+@app.get("/profile", include_in_schema=False)
+@app.get("/profile.html", include_in_schema=False)
+def profile_page():
+    return FileResponse(STATIC_DIR / "profile.html")
+
+
 @app.get("/health")
 def health():
     return {"status": "healthy"}
@@ -258,4 +264,38 @@ def delete_calculation(
     db.delete(calculation)
     db.commit()
     return None
+
+
+@app.get("/profile/me", response_model=UserRead)
+def get_profile(current_user: User = Depends(get_current_user)):
+    return current_user
+
+
+@app.patch("/profile/email", response_model=UserRead)
+def update_email(
+    payload: UserUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    existing = get_user_by_email(payload.email, db)
+    if existing is not None and existing.id != current_user.id:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Email already in use")
+    current_user.email = payload.email
+    db.commit()
+    db.refresh(current_user)
+    return current_user
+
+
+@app.patch("/profile/password", response_model=UserRead)
+def change_password(
+    payload: PasswordChange,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    if not verify_password(payload.current_password, current_user.password_hash):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Current password is incorrect")
+    current_user.password_hash = hash_password(payload.new_password)
+    db.commit()
+    db.refresh(current_user)
+    return current_user
 
