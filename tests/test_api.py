@@ -250,3 +250,54 @@ def test_calculation_endpoints_require_authentication(client):
     assert post_response.json()["detail"] == "Missing bearer token"
     assert list_response.status_code == 401
     assert list_response.json()["detail"] == "Missing bearer token"
+
+
+# ---------------------------------------------------------------------------
+# Reports endpoint
+# ---------------------------------------------------------------------------
+
+
+def test_report_empty_when_no_calculations(client):
+    headers = auth_headers(client, email="report-empty@example.com")
+    response = client.get("/reports", headers=headers)
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["total_calculations"] == 0
+    assert data["by_type"] == []
+    assert data["average_result"] is None
+    assert data["most_used_type"] is None
+
+
+def test_report_reflects_created_calculations(client):
+    headers = auth_headers(client, email="report-full@example.com")
+    client.post("/calculations", json={"type": "addition", "inputs": [1, 2]}, headers=headers)
+    client.post("/calculations", json={"type": "addition", "inputs": [3, 4]}, headers=headers)
+    client.post("/calculations", json={"type": "multiplication", "inputs": [2, 3]}, headers=headers)
+
+    response = client.get("/reports", headers=headers)
+    assert response.status_code == 200
+    data = response.json()
+
+    assert data["total_calculations"] == 3
+    assert data["most_used_type"] == "addition"
+    assert data["average_result"] is not None
+
+    by_type = {s["type"]: s["count"] for s in data["by_type"]}
+    assert by_type["addition"] == 2
+    assert by_type["multiplication"] == 1
+
+
+def test_report_isolated_per_user(client):
+    headers_a = auth_headers(client, email="report-user-a@example.com")
+    headers_b = auth_headers(client, email="report-user-b@example.com")
+
+    client.post("/calculations", json={"type": "addition", "inputs": [1, 2]}, headers=headers_a)
+    client.post("/calculations", json={"type": "addition", "inputs": [3, 4]}, headers=headers_a)
+
+    response = client.get("/reports", headers=headers_b)
+    assert response.json()["total_calculations"] == 0
+
+
+def test_report_requires_authentication(client):
+    assert client.get("/reports").status_code == 401

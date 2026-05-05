@@ -161,6 +161,7 @@ async function handleDeleteCalculation(id) {
     if (response.status === 204) {
         setMessage(messageElement, "Calculation deleted.", "success");
         await loadCalculations(token, listElement, messageElement, true);
+        await loadReport(token);
         return;
     }
 
@@ -249,6 +250,7 @@ async function handleCalculationSubmit(event) {
         delete form.dataset.editId;
     }
     await loadCalculations(token, listElement, messageElement, true);
+    await loadReport(token);
 }
 
 async function loadReport(token) {
@@ -296,6 +298,7 @@ function bindDashboard() {
     const listElement = document.querySelector("[data-result-list]");
     const messageElement = document.querySelector("[data-message]");
     const refreshButton = document.querySelector("[data-refresh]");
+    const refreshReportButton = document.querySelector("[data-refresh-report]");
     const logoutButton = document.querySelector("[data-logout]");
 
     const token = getAuthToken();
@@ -312,12 +315,19 @@ function bindDashboard() {
         await loadCalculations(token, listElement, messageElement);
     });
 
+    if (refreshReportButton) {
+        refreshReportButton.addEventListener("click", async () => {
+            await loadReport(token);
+        });
+    }
+
     logoutButton.addEventListener("click", () => {
         window.localStorage.removeItem(TOKEN_KEY);
         window.location.href = "/login";
     });
 
     loadCalculations(token, listElement, messageElement);
+    loadReport(token);
 }
 
 document.addEventListener("DOMContentLoaded", bindDashboard);
