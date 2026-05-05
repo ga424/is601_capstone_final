@@ -116,11 +116,12 @@
 
         async function handlePasswordSubmit(event) {
             event.preventDefault();
+            const form = event.currentTarget;
             const token = getAuthToken();
             if (!token) { window.location.href = "/login"; return; }
 
-            const currentPassword = event.currentTarget.elements.currentPassword.value;
-            const newPassword = event.currentTarget.elements.newPassword.value;
+            const currentPassword = form.elements.currentPassword.value;
+            const newPassword = form.elements.newPassword.value;
 
             if (newPassword.length < 8) {
                 setMessage("New password must be at least 8 characters.", "error");
@@ -139,7 +140,7 @@
                 setMessage(detail, "error");
                 return;
             }
-            event.currentTarget.reset();
+            form.reset();
             setMessage("Password changed successfully.", "success");
         }
 
